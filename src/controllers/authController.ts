@@ -3,27 +3,25 @@ import jwt, { SignOptions } from "jsonwebtoken";
 import User from "../models/User";
 import { sendEmail } from "../utils/email";
 
-const signToken = (id: string) => {
+const signToken = (user: any) => {
   const secret = process.env.JWT_SECRET || "";
   const options: SignOptions = {
-    expiresIn: "90d",
+    expiresIn: "7d",
   };
-  return jwt.sign({ id }, secret, options);
+
+  // Add any user fields you want in the token payload
+  const payload = {
+    id: user._id,
+    email: user.email,
+    name: user.name,
+    isAdmin: user.isAdmin,
+  };
+
+  return jwt.sign(payload, secret, options);
 };
 
 const createSendToken = (user: any, statusCode: number, res: Response) => {
-  const token = signToken(user._id);
-
-  const cookieOptions = {
-    expires: new Date(
-      Date.now() +
-        Number(process.env.JWT_COOKIE_EXPIRES_IN) * 24 * 60 * 60 * 1000
-    ),
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-  };
-
-  res.cookie("token", token, cookieOptions);
+  const token = signToken(user);
 
   // Remove password from output
   user.password = undefined;
@@ -31,9 +29,6 @@ const createSendToken = (user: any, statusCode: number, res: Response) => {
   res.status(statusCode).json({
     success: true,
     token,
-    data: {
-      user,
-    },
   });
 };
 
