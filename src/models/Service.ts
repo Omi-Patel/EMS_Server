@@ -4,6 +4,7 @@ export interface IService extends Document {
   name: string;
   description: string;
   basePrice: number;
+  imageUrl: string;
   category: string;
 }
 
@@ -22,6 +23,10 @@ const serviceSchema = new Schema<IService>(
       type: Number,
       required: [true, "Please provide base price"],
       min: [0, "Price cannot be negative"],
+    },
+    imageUrl: {
+      type: String,
+      trim: true,
     },
     category: {
       type: String,
