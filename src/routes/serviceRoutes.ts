@@ -1,5 +1,6 @@
 import express, { RequestHandler } from "express";
 import { protect, admin } from "../middlewares/authMiddleware";
+import { uploadMiddleware } from "../middlewares/uploadMiddleware";
 import {
   getAllServices,
   getService,
@@ -16,6 +17,7 @@ router
   .post(
     protect as RequestHandler,
     admin as RequestHandler,
+    uploadMiddleware('image'),
     createService as RequestHandler
   );
 
@@ -25,6 +27,7 @@ router
   .put(
     protect as RequestHandler,
     admin as RequestHandler,
+    uploadMiddleware('image'),
     updateService as RequestHandler
   )
   .delete(

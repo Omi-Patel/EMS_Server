@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import Service from "../models/Service";
+import { streamUpload } from "../utils/cloudinary";
 
 export const getAllServices = async (req: Request, res: Response) => {
   try {
@@ -40,7 +41,23 @@ export const getService = async (req: Request, res: Response) => {
 
 export const createService = async (req: Request, res: Response) => {
   try {
-    const service = await Service.create(req.body);
+    if (!req.file) {
+      return res.status(400).json({ 
+        success: false,
+        message: "No file uploaded" 
+      });
+    }
+
+    // Upload the file buffer to Cloudinary using stream
+    const result = await streamUpload(req.file.buffer);
+    const imageUrl = (result as any).secure_url;
+
+    // Create service with the image URL
+    const service = await Service.create({
+      ...req.body,
+      imageUrl
+    });
+
     res.status(201).json({
       success: true,
       data: service,
@@ -55,10 +72,22 @@ export const createService = async (req: Request, res: Response) => {
 
 export const updateService = async (req: Request, res: Response) => {
   try {
-    const service = await Service.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    });
+    let updateData = { ...req.body };
+
+    // If there's a new image file, upload it to Cloudinary
+    if (req.file) {
+      const result = await streamUpload(req.file.buffer);
+      updateData.imageUrl = (result as any).secure_url;
+    }
+
+    const service = await Service.findByIdAndUpdate(
+      req.params.id,
+      updateData,
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
 
     if (!service) {
       return res.status(404).json({
